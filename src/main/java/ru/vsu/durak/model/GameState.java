@@ -7,15 +7,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
-/** Начальное состояние партии: игроки, раздача, колода и козырь. */
+/** Состояние партии: игроки, колода, козырь и карты на столе. */
 public class GameState {
     private final List<Player> players = new ArrayList<>();
     private final Deque<Card> stock;
     private final Card trumpCard;
     private final int attackerIndex;
     private final int defenderIndex;
+    private final List<TablePair> table = new ArrayList<>();
+    private int attackLimit;
 
-    /** Создаёт партию для 2–4 игроков, перемешивая колоду по seed. */
+    /** Создаёт начальную раздачу для 2–4 игроков по одному seed. */
     public GameState(List<String> playerNames, long seed) {
         if (playerNames == null || playerNames.size() < 2 || playerNames.size() > 4) {
             throw new IllegalArgumentException("Нужно от 2 до 4 игроков");
@@ -36,7 +38,6 @@ public class GameState {
             }
         }
 
-        // Начинает тот, у кого младший козырь. Если ни у кого нет — первый игрок.
         int firstPlayer = 0;
         int lowestTrump = Integer.MAX_VALUE;
         for (int i = 0; i < players.size(); i++) {
@@ -52,38 +53,45 @@ public class GameState {
         defenderIndex = (firstPlayer + 1) % players.size();
     }
 
-    /** Возвращает игроков в порядке их ходов. */
-    public List<Player> getPlayers() {
-        return List.copyOf(players);
-    }
+    /** Возвращает игроков в порядке ходов. */
+    public List<Player> getPlayers() { return List.copyOf(players); }
 
-    /** Возвращает оставшиеся в колоде карты, верхняя — первая. */
-    public List<Card> getStockCards() {
-        return List.copyOf(stock);
-    }
+    /** Возвращает оставшуюся колоду, верхняя карта — первая. */
+    public List<Card> getStockCards() { return List.copyOf(stock); }
 
-    /** Возвращает количество карт в колоде. */
-    public int getStockSize() {
-        return stock.size();
-    }
+    /** Возвращает число карт в колоде. */
+    public int getStockSize() { return stock.size(); }
 
-    /** Возвращает открытую козырную карту внизу колоды. */
-    public Card getTrumpCard() {
-        return trumpCard;
-    }
+    /** Возвращает открытую нижнюю карту колоды. */
+    public Card getTrumpCard() { return trumpCard; }
 
     /** Возвращает козырную масть. */
-    public Suit getTrumpSuit() {
-        return trumpCard.suit();
+    public Suit getTrumpSuit() { return trumpCard.suit(); }
+
+    /** Возвращает номер атакующего. */
+    public int getAttackerIndex() { return attackerIndex; }
+
+    /** Возвращает номер защищающегося. */
+    public int getDefenderIndex() { return defenderIndex; }
+
+    /** Возвращает пары карт на столе. */
+    public List<TablePair> getTable() { return List.copyOf(table); }
+
+    /** Возвращает максимальное число атак за этот раунд, ноль до первой атаки. */
+    public int getAttackLimit() { return attackLimit; }
+
+    // Вызываются только из GameEngine после проверки правил.
+    void putAttack(int playerIndex, Card card) {
+        if (table.isEmpty()) {
+            attackLimit = Math.min(6, players.get(defenderIndex).getCardCount());
+        }
+        players.get(playerIndex).removeCard(card);
+        table.add(new TablePair(card, null));
     }
 
-    /** Возвращает номер атакующего игрока. */
-    public int getAttackerIndex() {
-        return attackerIndex;
-    }
-
-    /** Возвращает номер защищающегося игрока. */
-    public int getDefenderIndex() {
-        return defenderIndex;
+    void putDefense(int playerIndex, Card card, int pairIndex) {
+        players.get(playerIndex).removeCard(card);
+        TablePair pair = table.get(pairIndex);
+        table.set(pairIndex, new TablePair(pair.attack(), card));
     }
 }
