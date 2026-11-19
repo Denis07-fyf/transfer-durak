@@ -1,16 +1,16 @@
 package ru.vsu.durak.model;
 
-/** Масти игральных карт. */
-public enum Suit {
+/** Масти */
+public enum Suit {//перечисл
     CLUBS("♣"), DIAMONDS("♦"), HEARTS("♥"), SPADES("♠");
 
-    private final String symbol;
+    private final String symbol;//для значка
 
     Suit(String symbol) {
         this.symbol = symbol;
-    }
+    }//констр для зап знач
 
-    /** Возвращает обозначение масти. */
+    /** Возвращает масти. */
     public String symbol() {
         return symbol;
     }

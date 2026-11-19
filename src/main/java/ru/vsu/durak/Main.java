@@ -1,17 +1,25 @@
 package ru.vsu.durak;
 
-import ru.vsu.durak.model.Card;
-import ru.vsu.durak.model.Deck;
+import ru.vsu.durak.model.GameState;
+import ru.vsu.durak.model.Player;
 
 import java.util.List;
-import java.util.Random;
 
-/** Точка входа в приложение. */
+/** Временное консольное приложение для проверки раздачи. */
 public class Main {
-    /** Пока демонстрирует создание колоды. */
+    /** Создаёт партию с фиксированным seed и показывает раздачу. */
     public static void main(String[] args) {
-        List<Card> cards = Deck.shuffle(new Random(42));
-        System.out.println("Всего карт: " + cards.size());
-        System.out.println("Первые шесть карт: " + cards.subList(0, 6));
+        GameState game = new GameState(List.of("Игрок 1", "Игрок 2"), 42);
+        System.out.println("Козырь: " + game.getTrumpCard());
+        System.out.println("Осталось в колоде: " + game.getStockSize());
+
+        for (int i = 0; i < game.getPlayers().size(); i++) {
+            Player player = game.getPlayers().get(i);
+            System.out.println(player.getName() + ": " + player.getHand());
+        }
+        System.out.println("Атакует: "
+                + game.getPlayers().get(game.getAttackerIndex()).getName());
+        System.out.println("Защищается: "
+                + game.getPlayers().get(game.getDefenderIndex()).getName());
     }
 }

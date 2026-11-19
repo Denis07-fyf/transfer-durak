@@ -11,8 +11,8 @@ public class Deck {
     /** Создаёт полную колоду без перемешивания. */
     public static List<Card> create() {
         List<Card> cards = new ArrayList<>();
-        for (Suit suit : Suit.values()) {
-            for (Rank rank : Rank.values()) {
+        for (Suit suit : Suit.values()) {//перебор масти
+            for (Rank rank : Rank.values()) {// пребор достоинства
                 cards.add(new Card(rank, suit));
             }
         }
