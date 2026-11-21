@@ -1,48 +1,43 @@
 package ru.vsu.durak;
 
-import ru.vsu.durak.model.Card;
-import ru.vsu.durak.model.GameEngine;
+import ru.vsu.durak.model.BotGame;
+import ru.vsu.durak.model.BotStrategy;
+import ru.vsu.durak.model.GameEvent;
 import ru.vsu.durak.model.GameState;
+import ru.vsu.durak.model.SimpleBot;
+import ru.vsu.durak.model.TransferBot;
 
 import java.util.List;
 
-/** Пример одного завершённого раунда. Графика и боты будут в следующих блоках. */
+/** Консольная демонстрация полной партии между ботами. */
 public class Main {
-    /** Запускает учебную демонстрацию. */
+    /** Запускает партию с фиксированным начальным значением генератора. */
     public static void main(String[] args) {
-        GameState game = new GameState(List.of("Игрок 1", "Игрок 2"), 42);
-        GameEngine engine = new GameEngine(game);
+        List<BotStrategy> bots = List.of(new SimpleBot(), new TransferBot());
+        BotGame game = new BotGame(List.of("Простой бот", "Переводящий бот"), bots, 42);
+        GameState state = game.getState();
 
-        int attacker = game.getAttackerIndex();
-        int defender = game.getDefenderIndex();
-        Card attack = game.getPlayers().get(attacker).getHand().getFirst();
-
-        System.out.println("Козырь: " + game.getTrumpCard());
-        System.out.println("Атакует: " + game.getPlayers().get(attacker).getName());
-        System.out.println("Защищается: " + game.getPlayers().get(defender).getName());
-        engine.attack(attacker, attack);
-        System.out.println("Атака: " + attack);
-
-        Card defense = null;
-        for (Card card : game.getPlayers().get(defender).getHand()) {
-            if (card.beats(attack, game.getTrumpSuit())) {
-                defense = card;
-                break;
+        System.out.println("ПЕРЕВОДНОЙ ДУРАК");
+        System.out.println("Козырь: " + state.getTrumpCard());
+        while (!state.isFinished()) {
+            int start = game.getEvents().size();
+            System.out.println("\nРаунд " + state.getRoundNumber());
+            game.playRound();
+            List<GameEvent> events = game.getEvents();
+            for (int i = start; i < events.size(); i++) {
+                GameEvent event = events.get(i);
+                String player = event.playerIndex() < 0 ? "нет" :
+                        state.getPlayers().get(event.playerIndex()).getName();
+                String card = event.card() == null ? "" : " " + event.card();
+                System.out.println("  " + player + ": " + event.type() + card);
             }
+            System.out.println("Колода: " + state.getStockSize());
         }
-        if (defense == null) {
-            engine.take(defender);
-            engine.finishRound();
-            System.out.println("Защитник взял карты");
+        if (state.getLoserIndex() == -1) {
+            System.out.println("\nНичья!");
         } else {
-            engine.defend(defender, defense, 0);
-            engine.finishRound();
-            System.out.println("Защита: " + defense + ", бито!");
+            System.out.println("\nПроиграл: "
+                    + state.getPlayers().get(state.getLoserIndex()).getName());
         }
-        System.out.println("Следующий атакующий: "
-                + game.getPlayers().get(game.getAttackerIndex()).getName());
-        System.out.println("В колоде: " + game.getStockSize());
-        System.out.println("В отбое: " + game.getDiscardPile().size());
-        System.out.println("События: " + engine.getEvents().size());
     }
 }
