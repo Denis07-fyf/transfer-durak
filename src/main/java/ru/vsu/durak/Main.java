@@ -3,49 +3,46 @@ package ru.vsu.durak;
 import ru.vsu.durak.model.Card;
 import ru.vsu.durak.model.GameEngine;
 import ru.vsu.durak.model.GameState;
-import ru.vsu.durak.model.Player;
-import ru.vsu.durak.model.TablePair;
 
 import java.util.List;
 
-/** Временный пример атаки и защиты без графического интерфейса. */
+/** Пример одного завершённого раунда. Графика и боты будут в следующих блоках. */
 public class Main {
-    /** Запускает небольшой фрагмент партии с фиксированным seed. */
+    /** Запускает учебную демонстрацию. */
     public static void main(String[] args) {
         GameState game = new GameState(List.of("Игрок 1", "Игрок 2"), 42);
         GameEngine engine = new GameEngine(game);
 
-        System.out.println("Козырь: " + game.getTrumpCard());
-        System.out.println("Колода: " + game.getStockSize() + " карт");
-        for (Player player : game.getPlayers()) {
-            System.out.println(player.getName() + ": " + player.getHand());
-        }
-
         int attacker = game.getAttackerIndex();
         int defender = game.getDefenderIndex();
-        Card firstCard = game.getPlayers().get(attacker).getHand().getFirst();
-        engine.attack(attacker, firstCard);
-        System.out.println("Атака: " + firstCard);
+        Card attack = game.getPlayers().get(attacker).getHand().getFirst();
 
-        Card response = null;
+        System.out.println("Козырь: " + game.getTrumpCard());
+        System.out.println("Атакует: " + game.getPlayers().get(attacker).getName());
+        System.out.println("Защищается: " + game.getPlayers().get(defender).getName());
+        engine.attack(attacker, attack);
+        System.out.println("Атака: " + attack);
+
+        Card defense = null;
         for (Card card : game.getPlayers().get(defender).getHand()) {
-            if (card.beats(firstCard, game.getTrumpSuit())) {
-                response = card;
+            if (card.beats(attack, game.getTrumpSuit())) {
+                defense = card;
                 break;
             }
         }
-        if (response != null) {
-            engine.defend(defender, response, 0);
-            System.out.println("Защита: " + response);
+        if (defense == null) {
+            engine.take(defender);
+            engine.finishRound();
+            System.out.println("Защитник взял карты");
         } else {
-            System.out.println("У защитника нет подходящей карты");
+            engine.defend(defender, defense, 0);
+            engine.finishRound();
+            System.out.println("Защита: " + defense + ", бито!");
         }
-
-        System.out.println("Карты на столе:");
-        for (TablePair pair : game.getTable()) {
-            System.out.println(pair.attack() + " → "
-                    + (pair.defense() == null ? "не отбита" : pair.defense()));
-        }
-        System.out.println("Событий в журнале: " + engine.getEvents().size());
+        System.out.println("Следующий атакующий: "
+                + game.getPlayers().get(game.getAttackerIndex()).getName());
+        System.out.println("В колоде: " + game.getStockSize());
+        System.out.println("В отбое: " + game.getDiscardPile().size());
+        System.out.println("События: " + engine.getEvents().size());
     }
 }
