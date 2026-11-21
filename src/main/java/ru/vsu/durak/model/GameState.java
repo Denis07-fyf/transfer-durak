@@ -15,7 +15,6 @@ public class GameState {
     private final Card trumpCard;
     private final List<TablePair> table = new ArrayList<>();
     private final List<Card> discardPile = new ArrayList<>();
-    private final Set<Integer> shownTrumpPlayers = new HashSet<>();
     private final Set<Integer> outPlayers = new HashSet<>();
     private int attackerIndex;
     private int defenderIndex;
@@ -128,15 +127,6 @@ public class GameState {
         moveDefenseToNext(playerIndex);
     }
 
-    void putTrumpShowTransfer(int playerIndex) {
-        shownTrumpPlayers.add(playerIndex);
-        moveDefenseToNext(playerIndex);
-    }
-
-    boolean hasShownTrump(int playerIndex) {
-        return shownTrumpPlayers.contains(playerIndex);
-    }
-
     int nextActiveAfter(int index) {
         int next = (index + 1) % players.size();
         while (outPlayers.contains(next)) {
@@ -194,7 +184,6 @@ public class GameState {
         }
         attackLimit = 0;
         taking = false;
-        shownTrumpPlayers.clear();
         roundNumber++;
     }
 

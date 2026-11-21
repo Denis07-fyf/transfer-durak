@@ -22,18 +22,23 @@ class BasicGameTest {
     }
 
     private GameState findTransferState() {
-        for (int seed = 0; seed < 1000; seed++) {
+        for (int seed = 0; seed < 2000; seed++) {
             GameState state = new GameState(List.of("А", "Б"), seed);
+            GameEngine engine = new GameEngine(state);
+            engine.attack(state.getAttackerIndex(), firstAttack(state));
+            engine.take(state.getDefenderIndex());
+            engine.finishRound();
+            if (state.isFinished()) continue;
             Player attacker = state.getPlayers().get(state.getAttackerIndex());
             Player defender = state.getPlayers().get(state.getDefenderIndex());
             for (Card card : attacker.getHand()) {
                 if (defender.getHand().stream().anyMatch(other -> other.rank() == card.rank())) {
-                    new GameEngine(state).attack(state.getAttackerIndex(), card);
+                    engine.attack(state.getAttackerIndex(), card);
                     return state;
                 }
             }
         }
-        throw new AssertionError("Не найдена раздача с переводом");
+        throw new AssertionError("Не найдена раздача с переводом во втором кону");
     }
 
     @Test void deckHas36Cards() { assertEquals(36, Deck.create().size()); }
@@ -136,23 +141,20 @@ class BasicGameTest {
                 () -> new GameEngine(s).transfer(defender, wrong));
         assertEquals(1, s.getTable().size());
     }
-    @Test void showingTrumpTransfersWithoutRemovingCard() {
-        for (int seed = 0; seed < 10000; seed++) {
+    @Test void firstRoundTransferIsForbidden() {
+        for (int seed = 0; seed < 1000; seed++) {
             GameState s = new GameState(List.of("А", "Б"), seed);
             int attacker = s.getAttackerIndex();
             int defender = s.getDefenderIndex();
             for (Card attack : s.getPlayers().get(attacker).getHand()) {
-                Card shown = s.getPlayers().get(defender).getHand().stream()
-                        .filter(card -> card.rank() == attack.rank()
-                                && card.suit() == s.getTrumpSuit())
-                        .findFirst().orElse(null);
-                if (shown == null) continue;
+                Card transfer = s.getPlayers().get(defender).getHand().stream()
+                        .filter(card -> card.rank() == attack.rank()).findFirst().orElse(null);
+                if (transfer == null) continue;
                 GameEngine engine = new GameEngine(s);
                 engine.attack(attacker, attack);
-                engine.showTrumpAndTransfer(defender, shown);
-                assertTrue(s.getPlayers().get(defender).getHand().contains(shown));
+                assertThrows(IllegalArgumentException.class, () -> engine.transfer(defender, transfer));
                 assertEquals(1, s.getTable().size());
-                assertEquals(attacker, s.getDefenderIndex());
+                assertEquals(defender, s.getDefenderIndex());
                 return;
             }
         }

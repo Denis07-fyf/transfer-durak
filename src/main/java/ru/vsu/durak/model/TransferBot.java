@@ -8,7 +8,7 @@ public class TransferBot extends SimpleBot {
     /** Выбирает допустимую карту для перевода того же достоинства. */
     @Override
     public Card chooseTransfer(GameState state, int playerIndex) {
-        if (state.isTaking() || state.isFinished()
+        if (state.getRoundNumber() == 1 || state.isTaking() || state.isFinished()
                 || playerIndex != state.getDefenderIndex()) return null;
 
         List<TablePair> table = state.getTable();

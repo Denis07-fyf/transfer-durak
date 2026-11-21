@@ -106,31 +106,6 @@ public class GameEngine {
         return event;
     }
 
-    /** Показывает козырь без выкладывания и переводит атаку («проездной»). */
-    public GameEvent showTrumpAndTransfer(int playerIndex, Card card) {
-        checkGameIsRunning();
-        Player player = playerAt(playerIndex);
-        checkTransfer(playerIndex, card);
-        if (!player.getHand().contains(card)) {
-            throw new IllegalArgumentException("Такой карты нет на руке");
-        }
-        if (card.suit() != state.getTrumpSuit() || state.getStockSize() == 0) {
-            throw new IllegalArgumentException("Показывать можно только козырь при открытом козыре");
-        }
-        if (state.hasShownTrump(playerIndex)) {
-            throw new IllegalArgumentException("Этот игрок уже использовал проездной в раунде");
-        }
-        int nextDefender = state.nextActiveAfter(playerIndex);
-        if (state.getTable().size() > state.getPlayers().get(nextDefender).getCardCount()) {
-            throw new IllegalArgumentException("У следующего игрока мало карт для перевода");
-        }
-        state.putTrumpShowTransfer(playerIndex);
-        GameEvent event = new GameEvent(GameEvent.Type.TRUMP_SHOW_TRANSFER,
-                playerIndex, card, -1);
-        events.add(event);
-        return event;
-    }
-
     /** Защищающийся объявляет «Беру». После этого можно подкинуть ещё карты. */
     public GameEvent take(int playerIndex) {
         checkGameIsRunning();
@@ -172,6 +147,9 @@ public class GameEngine {
 
     private void checkTransfer(int playerIndex, Card card) {
         playerAt(playerIndex);
+        if (state.getRoundNumber() == 1) {
+            throw new IllegalArgumentException("В первом кону перевод запрещён");
+        }
         if (state.isTaking()) throw new IllegalArgumentException("Защитник решил взять карты");
         if (card == null) throw new IllegalArgumentException("Карта не указана");
         if (playerIndex != state.getDefenderIndex()) {
